@@ -110,7 +110,8 @@ export default function RootLayout({
 
 이렇게 레이아웃 파일을 만들고 <http://localhost:3000>을 접속하면 이렇게 뜬다.
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/847a7f50-0353-4343-ba79-030dd770f6c3/Untitled.png)
+<img width="607" alt="image" src="https://user-images.githubusercontent.com/58321856/220382176-d79e2a7c-98a2-44ff-b77f-5c1fe1ec79a8.png">
+
 
 특정 폴더 안에서만 레이아웃을 지정해보자
 
@@ -141,7 +142,7 @@ export default function TodoPage() {
 }
 ```
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b8a807e4-69af-4723-9b9a-2441742c7140/Untitled.png)
+<img width="580" alt="image" src="https://user-images.githubusercontent.com/58321856/220382256-f596a604-3964-4c69-80a4-98a2e5e1d9b9.png">
 
 그럼 이렇게 특정 페이지에서만 레이아웃을 적용할 수 있다. 와!
 
