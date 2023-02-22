@@ -217,6 +217,11 @@ export default async function TodoPage() {
 }
 ```
 
+
+https://user-images.githubusercontent.com/58321856/220660615-f41cad35-428d-476d-b400-0ce0861e47ee.mov
+
+그럼 이렇게 loading 상태를 표시할 수 있다. 와!
+
 ### Support for Data Fetching
 
 데이터를 가져오고 컴포넌트 내부에서 promise를 처리하는 강력하고 새로운 방법
