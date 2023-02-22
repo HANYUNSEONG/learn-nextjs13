@@ -1,6 +1,6 @@
 # nextjs 13에 대해서 알아보자
 
-_목차_
+목차
 
 - [nextjs 13에 대해서 알아보자](#nextjs-13에-대해서-알아보자)
   - [가보자고](#가보자고)
@@ -10,6 +10,13 @@ _목차_
     - [Server Components](#server-components)
     - [Streaming](#streaming)
     - [Support for Data Fetching](#support-for-data-fetching)
+  - [turbopack](#turbopack)
+  - [next/image](#nextimage)
+  - [@next/font](#nextfont)
+  - [next/link](#nextlink)
+  - [OG Image Generation](#og-image-generation)
+  - [Middleware API 업데이트](#middleware-api-업데이트)
+  - [참고](#참고)
 
 ## 가보자고
 
@@ -153,6 +160,277 @@ _이 부분은 [여기](https://beta.nextjs.org/docs/rendering/server-and-client
 
 ### Streaming
 
-로드 상태를 표시
+app 디렉토리에 loading.js 라는 파일을 생성하면 렌더링되기 이전에 로딩 화면을 표시할 수 있다.
+
+기존에는 스피너나 다른 로딩 컴포넌트를 사용하여 표현했는데 이젠 로딩 화면을 구현하는데 조금 더 편리해진 것 같다.
+
+[Next.js Data Fetcting](https://beta.nextjs.org/docs/data-fetching/fundamentals)
+
+```jsx
+// app/todo/loading.tsx
+export default function TodoLoading() {
+  return <div>Todo Loading...</div>;
+}
+
+// app/todo/page.tsx
+import { Suspense } from "react";
+
+type TodoListType = {
+  id: number;
+  todo: string;
+  completed: boolean;
+  userId: number;
+}[];
+
+async function getData(): Promise<{
+  todos: TodoListType;
+}> {
+  const res = await fetch("https://dummyjson.com/todos");
+
+  return res.json();
+}
+
+const TodoList = ({ list }: { list: TodoListType }) => {
+  console.log(list);
+  return (
+    <div>
+      <ul>
+        {list.map(({ todo, id }) => (
+          <p key={id}>{todo}</p>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default async function TodoPage() {
+  const todoList = await getData();
+
+  return (
+    <div>
+      <Suspense fallback={<p>Loading feed...</p>}>
+        <TodoList list={todoList.todos} />
+      </Suspense>
+    </div>
+  );
+}
+```
 
 ### Support for Data Fetching
+
+데이터를 가져오고 컴포넌트 내부에서 promise를 처리하는 강력하고 새로운 방법
+
+```jsx
+// app/page.js
+async function getData() {
+  const res = await fetch("https://api.example.com/...");
+  // The return value is *not* serialized
+  // You can return Date, Map, Set, etc.
+  return res.json();
+}
+
+// This is an async Server Component
+export default async function Page() {
+  const data = await getData();
+
+  return <main>{/* ... */}</main>;
+}
+```
+
+기존 fetch web api도 React 및 Next.js에서 확장되어 request를 중복으로 요청하는 걸 자동으로 방지해준다.
+
+[automatically dedupes fetch requests](https://beta.nextjs.org/docs/data-fetching/fundamentals#automatic-fetch-request-deduping)
+
+## turbopack
+
+Rust 기반으로 만들어진 Webpack를 대체할 번들러라고 한다.
+
+- Webpack보다 **700배** 빠른 업데이트
+- Vite보다 **10배** 빠른 업데이트
+- Webpack보다 **4배** 빠른 콜드 스타트
+
+```jsx
+next dev --turbo
+```
+
+## next/image
+
+Next.js 13은 **강력한 새 이미지 구성 요소 를** 도입하여 레이아웃 변경 없이 이미지를 쉽게 표시하고 성능 향상을 위해 필요에 따라 파일을 최적화할 수 있다고 한다.
+
+- 더 적은 클라이언트 측 JavaScript 제공
+- 더 쉬운 스타일 지정 및 구성
+- `alt`기본적으로 더 쉽게 액세스할 수 있는 필수 태그
+- 웹 플랫폼과 일치
+- 기본 지연 로딩에 수화가 필요하지 않기 때문에 더 빠름
+
+```jsx
+import Image from "next/image";
+import avatar from "./lee.png";
+
+function Home() {
+  // "alt" is now required for improved accessibility
+  // optional: image files can be colocated inside the app/ directory
+  return <Image alt="leeerob" src={avatar} placeholder="blur" />;
+}
+```
+
+기존에는 width와 height를 지정해줘야 했지만 이제는 자동으로 제공해주는 것 같다.
+
+> 조금 더 편리해지고 성능도 개선이 된 것 같다.
+
+## @next/font
+
+Next.js 13에는 새로운 글꼴 시스템이 도입되었다.
+
+- 사용자 지정 글꼴을 포함하여 글꼴을 자동으로 최적화
+- 개인 정보 보호와 성능 향상을 위해 외부 네트워크 요청을 제거
+- 모든 글꼴 파일에 대한 자동 자체 호스팅
+- CSS `[size-adjust](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/size-adjust)`를 사용하여 레이아웃 이동 없음
+
+새로운 글꼴 시스템을 사용하면 **모든 구글 폰트**를 사용할 수 있다. 빌드 시 자동으로 다운로드 되기 때문에 구글로 따로 요청을 보내지 않는다고 한다.
+
+> 좋다
+
+구글 폰트 사용
+
+```jsx
+import { Inter } from '@next/font/google';
+
+const inter = Inter();
+
+<html className={inter.className}>
+```
+
+사용자 지정 글꼴 사용 시
+
+```jsx
+import localFont from '@next/font/local';
+
+const myFont = localFont({ src: './my-font.woff2' });
+
+<html className={myFont.className}>
+```
+
+## next/link
+
+이제 `<a>` 태그를 수동으로 children에 추가 안 해도 된다고 한다. (자동으로 렌더링 해줌)
+
+> `<Link>`를 사용하면서 항상 `<a>`를 넣어주곤 했는데 조금 불편했었다. 개선되어서 아주 좋음
+
+next/link를 next.js 13로 업데이트 하기
+
+_제공되는 [codemod](https://nextjs.org/docs/advanced-features/codemods)를 실행하면 된다._
+
+```jsx
+npx @next/codemod new-link ./pages
+```
+
+## OG Image Generation
+
+OG(OpenGraph) Image는 마케팅적으로 많이 사용되고 사용자들의 클릭 참여율을 크게 높힌다.
+
+하지만 이걸 수동으로 작업하면 관리 차원에서 조금 힘든 부분이 있는데 이 점을 보완하기 위해서
+
+Next.js와 원활하게 작동하는 새로운 라이브러리를 만들었다고 한다. `[@vercel/og](https://vercel.com/docs/concepts/functions/edge-functions/og-image-generation)`
+
+```jsx
+// pages/api/og.jsx
+
+import { ImageResponse } from "@vercel/og";
+
+export const config = {
+  runtime: "experimental-edge",
+};
+
+export default function () {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          display: "flex",
+          fontSize: 128,
+          background: "white",
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        Hello, World!
+      </div>
+    )
+  );
+}
+```
+
+## Middleware API 업데이트
+
+Next.js 12에서 middleware를 도입하여 라우터의 유연성을 지원했다. 커뮤니티의 의견을 반영하여 몇 가지 추가 사항을 구현했다고 한다.
+
+1. request에 header를 더 쉽게 설정할 수 있다.
+
+```jsx
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  // request header를 복제하고 새로운 header 'x-version'을 설정한다.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-version", "13");
+
+  // NextResponse.rewrite에서 request header를 설정할 수 있다.
+  const response = NextResponse.next({
+    request: {
+      // New request headers
+      headers: requestHeaders,
+    },
+  });
+
+  // 새로운 response header 'x-version' 설정
+  response.headers.set("x-version", "13");
+  return response;
+}
+```
+
+1. `rewrite` 또는 `redirect`를 사용할 필요 없이 미들웨어에서 직접 응답을 제공할 수 있다.
+
+```jsx
+// middleware.ts
+import { NextRequest, NextResponse } from "next/server";
+import { isAuthenticated } from "@lib/auth";
+
+// 미들웨어를 `/api`로 시작하는 경로로 제한
+export const config = {
+  matcher: "/api/:function*",
+};
+
+export function middleware(request: NextRequest) {
+  // 요청에 대한 인증 확인
+  if (!isAuthenticated(request)) {
+    // 오류 메시지를 나타내는 json으로 응답
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Auth failed",
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+}
+```
+
+미들웨어에서 응답을 보내려면 아래의 설정이 필요하다.
+
+```jsx
+// next.config.js
+const nextConfig = {
+  experimental: {
+    allowMiddlewareResponseBody: true,
+  },
+};
+```
+
+## 참고
+
+- [next.js blog - next.js 13](https://nextjs.org/blog/next-13)
